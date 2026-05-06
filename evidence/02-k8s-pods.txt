@@ -1,0 +1,4 @@
+NAME                       READY   STATUS    RESTARTS      AGE
+backend-59dbd94d68-82rpq   1/1     Running   8 (92m ago)   32h
+backend-59dbd94d68-kkblx   1/1     Running   8 (92m ago)   32h
+mongodb-56555f5d48-4lsmb   1/1     Running   1 (93m ago)   32h

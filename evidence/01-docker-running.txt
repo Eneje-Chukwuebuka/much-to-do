@@ -1,0 +1,4 @@
+CONTAINER ID   IMAGE                  COMMAND                  CREATED             STATUS                       PORTS                                         NAMES
+3e3866c77dad   much-to-do-backend     "/app/much-to-do"        About an hour ago   Up About an hour (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp   muchtodo-backend
+effbd4f2273a   mongo:7.0              "docker-entrypoint.s…"   About an hour ago   Up About an hour (healthy)   27017/tcp                                     muchtodo-mongo
+69555457e2e3   kindest/node:v1.35.0   "/usr/local/bin/entr…"   33 hours ago        Up 2 hours                   127.0.0.1:45127->6443/tcp                     muchtodo-control-plane

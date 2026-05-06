@@ -1,0 +1,3 @@
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+backend-service   NodePort    10.96.167.203   <none>        80:30080/TCP   32h
+mongodb-service   ClusterIP   10.96.59.52     <none>        27017/TCP      32h
