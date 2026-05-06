@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Kubernetes and scripts
+kubernetes/
+scripts/
+
+# Test files
+*_test.go
+
+# Evidence and docs
+evidence/
+*.md
+
+# Environment files
+!.env.example
+
+# OS files
+.DS_Store

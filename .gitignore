@@ -1,0 +1,67 @@
+# ========================
+# Environment & Secrets
+# ========================
+.env
+.env.local
+.env.*.local
+
+# ========================
+# Kubernetes Secrets
+# ========================
+kubernetes/mongodb/mongodb-secret.yaml
+kubernetes/backend/backend-secret.yaml
+
+# ========================
+# Go Build Output
+# ========================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/bin/
+/dist/
+much-to-do
+
+# ========================
+# Go Dependency Cache
+# ========================
+vendor/
+
+# ========================
+# IDE & Editor Files
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.vim
+.vim/
+
+# ========================
+# OS Files
+# ========================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Test Coverage
+# ========================
+coverage.out
+coverage.html
+
+# ========================
+# Docker
+# ========================
+.docker/
