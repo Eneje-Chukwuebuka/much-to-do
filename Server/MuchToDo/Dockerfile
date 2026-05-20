@@ -1,5 +1,5 @@
 # ─── Build Stage ───────────────────────────────────────────────────
-FROM golang:1.25-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
@@ -8,6 +8,10 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 # Copy go mod files and download dependencies
 COPY go.mod go.sum ./
+
+# Allow newer Go toolchain to be downloaded automatically
+ENV GOTOOLCHAIN=auto
+
 RUN go mod download
 
 # Copy source code
