@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, feature/full-stack]
     paths:
-      - "Client/**"
+      - "Server/**"
   pull_request:
     branches: [main, feature/full-stack]
     paths:
-      - "Client/**"
+      - "Server/**"
 
 env:
   AWS_REGION: "us-east-1"
