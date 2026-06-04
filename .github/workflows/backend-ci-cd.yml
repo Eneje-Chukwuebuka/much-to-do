@@ -2,13 +2,13 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [feature/full-stack]
+    branches: [main, feature/full-stack]
     paths:
-      - 'Server/**'
+      - "Client/**"
   pull_request:
-    branches: [feature/full-stack]
+    branches: [main, feature/full-stack]
     paths:
-      - 'Server/**'
+      - "Client/**"
 
 env:
   AWS_REGION: "us-east-1"
