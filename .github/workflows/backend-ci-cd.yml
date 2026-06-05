@@ -108,7 +108,9 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           ASG_NAME="starttech-prod-asg"
-          LT_NAME="starttech-prod-backend"
+          # Look up the actual launch template name (has timestamp suffix from Terraform)
+          LT_NAME=$(aws ec2 describe-launch-templates             --query 'LaunchTemplates[?starts_with(LaunchTemplateName, `starttech-prod-backend`)].LaunchTemplateName'             --output text)
+          echo "Launch template: $LT_NAME"
 
           # Build new user data that pulls and runs the new image on boot
           NEW_USER_DATA=$(base64 -w 0 << EOF
