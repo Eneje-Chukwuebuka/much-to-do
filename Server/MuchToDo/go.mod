@@ -1,6 +1,8 @@
 module github.com/Innocent9712/much-to-do/Server/MuchToDo
 
-go 1.24
+go 1.24.0
+
+toolchain go1.24.2
 
 require (
 	github.com/gin-contrib/cors v1.7.6
@@ -132,4 +134,3 @@ require (
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
