@@ -190,7 +190,7 @@ jobs:
           echo "Instance refresh started: $REFRESH_ID"
 
           # Wait for completion
-          for i in $(seq 1 40); do
+          for i in $(seq 1 60); do
             STATUS=$(aws autoscaling describe-instance-refreshes \
               --auto-scaling-group-name $ASG_NAME \
               --instance-refresh-ids $REFRESH_ID \
