@@ -102,41 +102,127 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Deploy to EC2 via SSM
+      - name: Deploy via ASG Instance Refresh
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           ASG_NAME="starttech-prod-asg"
+          LT_NAME="starttech-prod-backend"
 
-          # Get instance IDs from ASG
-          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names $ASG_NAME \
-            --query 'AutoScalingGroups[0].Instances[*].InstanceId' \
+          # Build new user data that pulls and runs the new image on boot
+          NEW_USER_DATA=$(base64 -w 0 << EOF
+          #!/bin/bash
+          apt-get update -y
+          apt-get install -y docker.io awscli ca-certificates
+
+          # Install CloudWatch agent
+          wget -q https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+          dpkg -i amazon-cloudwatch-agent.deb
+
+          # Configure CloudWatch agent
+          mkdir -p /opt/aws/amazon-cloudwatch-agent/etc
+          cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'CWCONFIG'
+          {
+            "logs": {
+              "logs_collected": {
+                "files": {
+                  "collect_list": [
+                    {
+                      "file_path": "/var/log/starttech-backend.log",
+                      "log_group_name": "/starttech/prod/backend",
+                      "log_stream_name": "{instance_id}"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+          CWCONFIG
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+            -a fetch-config -m ec2 \
+            -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+
+          # Login to ECR
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            docker login --username AWS --password-stdin $ECR_REGISTRY
+
+          # Stop existing container
+          docker stop starttech-backend 2>/dev/null || true
+          docker rm starttech-backend 2>/dev/null || true
+
+          # Pull and run new image
+          docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker run -d \
+            --name starttech-backend \
+            --restart unless-stopped \
+            -p 8080:8080 \
+            -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+            -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET }}" \
+            -e REDIS_ADDR="starttech-prod-redis.zwqdjf.0001.use1.cache.amazonaws.com:6379" \
+            -e PORT=8080 \
+            -e LOG_FORMAT=json \
+            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 2>&1 | tee -a /var/log/starttech-backend.log
+          EOF
+          )
+
+          # Create new launch template version with updated user data
+          aws ec2 create-launch-template-version \
+            --launch-template-name $LT_NAME \
+            --version-description "deploy-${IMAGE_TAG:0:7}" \
+            --source-version '$Latest' \
+            --launch-template-data "{\"UserData\":\"$NEW_USER_DATA\"}"
+
+          # Update ASG to use latest launch template version
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name $ASG_NAME \
+            --launch-template "LaunchTemplateName=$LT_NAME,Version=\$Latest"
+
+          # Start instance refresh
+          REFRESH_ID=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name $ASG_NAME \
+            --preferences '{"MinHealthyPercentage":50,"InstanceWarmup":90}' \
+            --query 'InstanceRefreshId' \
             --output text)
 
-          echo "Deploying to instances: $INSTANCE_IDS"
+          echo "Instance refresh started: $REFRESH_ID"
 
-          # Deploy to each instance via SSM
-          for INSTANCE_ID in $INSTANCE_IDS; do
-            aws ssm send-command \
-              --instance-ids $INSTANCE_ID \
-              --document-name "AWS-RunShellScript" \
-              --parameters commands="[
-                'aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $ECR_REGISTRY',
-                'docker pull $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG',
-                'docker stop starttech-backend || true',
-                'docker rm starttech-backend || true',
-                'docker run -d --name starttech-backend \
-                  --restart always \
-                  -p 8080:8080 \
-                  --env-file /etc/environment \
-                  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG'
-              ]" \
-              --region ${{ env.AWS_REGION }}
+          # Wait for completion
+          for i in $(seq 1 40); do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name $ASG_NAME \
+              --instance-refresh-ids $REFRESH_ID \
+              --query 'InstanceRefreshes[0].Status' \
+              --output text)
+            echo "Attempt $i/40 — Status: $STATUS"
+            if [ "$STATUS" = "Successful" ]; then
+              echo "✅ Instance refresh complete"
+              exit 0
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ]; then
+              echo "❌ Instance refresh failed: $STATUS"
+              exit 1
+            fi
+            sleep 20
           done
+          echo "⏱ Timed out"
+          exit 1
+
+      - name: Smoke test
+        run: |
+          echo "Testing ALB health endpoint..."
+          for i in $(seq 1 10); do
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+              http://${{ secrets.ALB_DNS_NAME }}/health || echo "000")
+            echo "Attempt $i/10 — HTTP: $HTTP"
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ Smoke test passed"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "❌ Smoke test failed"
+          exit 1
 
       - name: Deployment summary
         run: |
           echo "✅ Backend deployed successfully"
-          echo "🔗 API available at: http://${{ secrets.ALB_DNS_NAME }}"
