@@ -145,9 +145,13 @@ jobs:
             -a fetch-config -m ec2 \
             -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
 
-          # Login to ECR
-          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-            docker login --username AWS --password-stdin $ECR_REGISTRY
+          # Login to ECR with retry
+          for i in 1 2 3 4 5; do
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              docker login --username AWS --password-stdin $ECR_REGISTRY && break
+            echo "ECR login attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
 
           # Stop existing container
           docker stop starttech-backend 2>/dev/null || true
@@ -164,7 +168,7 @@ jobs:
             -e REDIS_ADDR="starttech-prod-redis.zwqdjf.0001.use1.cache.amazonaws.com:6379" \
             -e PORT=8080 \
             -e LOG_FORMAT=json \
-            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 2>&1 | tee -a /var/log/starttech-backend.log
+            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG >> /tmp/starttech-backend.log 2>&1
           EOF
           )
 
