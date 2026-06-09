@@ -51,3 +51,4 @@ integration-test:
 ..
 x
 x
+.
