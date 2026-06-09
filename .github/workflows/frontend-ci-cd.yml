@@ -12,7 +12,7 @@ on:
 
 env:
   AWS_REGION: "us-east-1"
-  S3_BUCKET: "starttech-frontend-prod-394747153553"
+  S3_BUCKET: "starttech-frontend-prod-009075573825"
   CLOUDFRONT_DISTRIBUTION_ID: "EEEBWSRKU27B7"
 
 jobs:
