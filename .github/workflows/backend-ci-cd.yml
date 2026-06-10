@@ -170,6 +170,7 @@ jobs:
             -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET }}" \
             -e REDIS_ADDR="starttech-prod-redis.jdkibm.0001.use1.cache.amazonaws.com:6379" \
             -e PORT=8080 \
+            -e DB_NAME=much_todo_db \
             -e LOG_FORMAT=json \
             -e ALLOWED_ORIGINS="https://d212ob5c97wf3h.cloudfront.net" \
             -e COOKIE_DOMAINS="d212ob5c97wf3h.cloudfront.net" \
