@@ -117,7 +117,6 @@ jobs:
           #!/bin/bash
           apt-get update -y
           apt-get install -y docker.io awscli ca-certificates
-
           # Install CloudWatch agent
           wget -q https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
           dpkg -i amazon-cloudwatch-agent.deb
@@ -162,12 +161,19 @@ jobs:
           docker run -d \
             --name starttech-backend \
             --restart unless-stopped \
+            --log-driver=awslogs \
+            --log-opt awslogs-region=us-east-1 \
+            --log-opt awslogs-group=/starttech/prod/backend \
+            --log-opt awslogs-create-group=true \
             -p 8080:8080 \
             -e MONGO_URI="${{ secrets.MONGO_URI }}" \
             -e JWT_SECRET_KEY="${{ secrets.JWT_SECRET }}" \
             -e REDIS_ADDR="starttech-prod-redis.jdkibm.0001.use1.cache.amazonaws.com:6379" \
             -e PORT=8080 \
             -e LOG_FORMAT=json \
+            -e ALLOWED_ORIGINS="https://d212ob5c97wf3h.cloudfront.net" \
+            -e COOKIE_DOMAINS="d212ob5c97wf3h.cloudfront.net" \
+            -e SECURE_COOKIE=true \
             $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG >> /tmp/starttech-backend.log 2>&1
           EOF
           )
