@@ -84,3 +84,4 @@ trigger
 .
 .
 .
+rebuild
