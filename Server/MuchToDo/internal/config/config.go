@@ -39,6 +39,15 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.SetDefault("SECURE_COOKIE", false)
 	viper.SetDefault("ALLOWED_ORIGINS", []string{"http://localhost:5173"})
 
+	// Explicitly bind env vars so Unmarshal sees them even without a .env file
+	for _, key := range []string{
+		"PORT", "MONGO_URI", "DB_NAME", "JWT_SECRET_KEY", "JWT_EXPIRATION_HOURS",
+		"ENABLE_CACHE", "REDIS_ADDR", "REDIS_PASSWORD", "LOG_LEVEL", "LOG_FORMAT",
+		"COOKIE_DOMAINS", "SECURE_COOKIE", "ALLOWED_ORIGINS",
+	} {
+		_ = viper.BindEnv(key)
+	}
+
 	err = viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
