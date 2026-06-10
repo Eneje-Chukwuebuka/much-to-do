@@ -6,9 +6,9 @@ A full-stack todo application built with React/Vite (frontend) and Golang/Gin (b
 
 | Service | URL |
 |---|---|
-| Frontend | https://dw77jeqi4cbdr.cloudfront.net |
-| Backend API | http://starttech-prod-alb-1966841913.us-east-1.elb.amazonaws.com |
-| API Docs | http://starttech-prod-alb-1966841913.us-east-1.elb.amazonaws.com/swagger/index.html |
+| Frontend | https://d212ob5c97wf3h.cloudfront.net |
+| Backend API | http://starttech-prod-alb-26705319.us-east-1.elb.amazonaws.com |
+| API Docs | http://starttech-prod-alb-26705319.us-east-1.elb.amazonaws.com/swagger/index.html |
 
 ## Application Stack
 
